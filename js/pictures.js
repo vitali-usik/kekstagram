@@ -19,6 +19,16 @@ var DESCRIPTIONS = [
   'Цените каждое мгновенье. Цените тех, кто рядом с вами и отгоняйте все сомненья. Не обижайте всех словами......',
   'Вот это тачка!'
 ];
+var uploadFileElement = document.querySelector('#upload-file');
+var imageUploadElement = document.querySelector('.img-upload__overlay');
+var imagePreviewElement = imageUploadElement.querySelector('.img-upload__preview');
+var imageElement = imagePreviewElement.querySelector('img');
+var closeImageUploadElement = document.querySelector('.img-upload__cancel');
+var scaleElement = imageUploadElement.querySelector('.img-upload__scale');
+var effectsElement = imageUploadElement.querySelector('.effects__list');
+var effectsItemElement = effectsElement.querySelectorAll('.effects__item');
+var resizeElement = imageUploadElement.querySelector('.img-upload__resize');
+var currentFilter;
 
 var generateRandomInt = function(min, max) {
   return Math.floor(Math.random() * (max - min) + min);
@@ -55,7 +65,7 @@ var generatePost = function (post) {
 
   element.querySelector('.picture__img').src = post.url;
   element.querySelector('.picture__stat--likes').textContent = post.likes;
-  element.querySelector('.picture__stat--comments').textContent = post.comments;
+  element.querySelector('.picture__stat--comments').textContent = 1; // TODO post.comments;
 
   return element;
 }
@@ -100,7 +110,80 @@ var initPictures = function () {
   var posts = generatePosts(POSTS_SIZE);
   var postsDOM = generatePostsList(posts);
   showPosts(postsDOM);
-  showBigPicture(posts[0]);
+  // showBigPicture(posts[0]);
+  resizeElement.setAttribute('style', 'z-index: 1');
 }
 
 initPictures();
+
+// event listeners
+
+var clearAndHideUpload = function () {
+  uploadFileElement.value = '';
+  imageUploadElement.classList.add('hidden');
+}
+
+var onCloseUploadClick = function (evt) {
+  clearAndHideUpload();
+  closeImageUploadElement.removeEventListener('click', onCloseUploadClick);
+}
+
+var onUploadEscPress = function (evt) {
+  clearAndHideUpload();
+  document.removeEventListener('keydown', onUploadEscPress);
+}
+
+var onUploadFileChange = function (evt) {
+  imageUploadElement.classList.remove('hidden');
+  scaleElement.classList.add('hidden');
+
+  closeImageUploadElement.addEventListener('click', onCloseUploadClick);
+  document.addEventListener('keydown', onUploadEscPress);
+}
+
+var applyFilter = function(evt) {
+  evt.preventDefault();
+
+  var filterName = evt.target.parentElement.htmlFor.substring(7);
+  var className = 'effects__preview--' + filterName;
+
+  if (currentFilter) {
+    imageElement.classList.remove(currentFilter);
+  }
+
+  imageElement.classList.add(className);
+  currentFilter = className;
+
+  switch (filterName) {
+    case 'chrome':
+      scaleElement.classList.remove('hidden');
+      imagePreviewElement.setAttribute('style', 'filter: grayscale(1);');
+      break;
+    case 'sepia':
+      scaleElement.classList.remove('hidden');
+      imagePreviewElement.setAttribute('style', 'filter: sepia(1);');
+      break;
+    case 'marvin':
+      scaleElement.classList.remove('hidden');
+      imagePreviewElement.setAttribute('style', 'filter: invert(100%);');
+      break;
+    case 'phobos':
+      scaleElement.classList.remove('hidden');
+      imagePreviewElement.setAttribute('style', 'filter: blur(3px);');
+      break;
+    case 'heat':
+      scaleElement.classList.remove('hidden');
+      imagePreviewElement.setAttribute('style', 'filter: brightness(3)');
+      break;
+    default:
+      scaleElement.classList.add('hidden');
+      imagePreviewElement.setAttribute('style', '');
+      break;
+  }
+}
+
+uploadFileElement.addEventListener('change', onUploadFileChange);
+
+for (var i = 0; i < effectsItemElement.length; i++) {
+  effectsItemElement[i].addEventListener('click', applyFilter);
+}
